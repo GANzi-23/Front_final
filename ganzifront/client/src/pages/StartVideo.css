@@ -1,0 +1,80 @@
+.logo-container {
+    width: 115px;
+    height: 33px;
+    position: fixed; 
+    top: 0;
+    left: 0;
+    z-index: 999; 
+}
+.Introduce-container {
+    width: 100%; 
+    max-width: 1000px; 
+    margin: 100px auto; 
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-left: 10px;
+  }
+
+
+  .Introduce-container img {
+    width: 100%;
+    height: auto;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.StartVideo-container {
+    width: 100vh;
+    height: 10vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.input-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 20px;
+    margin-left: 150px;
+  }
+  
+  .input-container form {
+    display: flex;
+    flex-direction: row; 
+    align-items: center;
+  }
+  
+  .input-container label {
+    display: none;
+  }
+  
+  .input-container input {
+    flex: 1; 
+    font-family: 'Poppins', sans-serif;
+    font-size: 20px;
+    padding: 10px 20px;
+    border-radius: 9px;
+    border: 1px solid #7CD2D7;
+    margin-right: 10px; 
+    width: 282px;
+    height: 42px;
+  }
+  
+  .input-container button {
+    font-size: 20px;
+    padding: 10px 20px;
+    background-color: #7CD2D7;
+    font-family: 'Poppins', sans-serif;
+    color: #fff;
+    border: none;
+    border-radius: 9px;
+    cursor: pointer;
+    margin-left: 10px;
+    height: 65px;
+    width: 80px;
+    font-weight: bold;
+  }
+  
