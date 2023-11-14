@@ -11,15 +11,22 @@ const VideoRoomPage = () => {
 
   // 모델 목록 정의
   const models = [
-      { id : 1, name: "Original"},
-      { id : 2, name: "Arcane"},
-      { id : 3, name: "Pixar"},
-      { id : 4, name: "Disney"}
+      { id : 1, name: "original"},
+      { id : 2, name: "arcane"},
+      { id : 3, name: "pixar"},
+      { id : 4, name: "disney"}
     ];
-      // 메뉴 표시 토글
+
+  // 메뉴 표시 토글
   const toggleModelMenu = () => {
       setIsModelMenuVisible(!isModelMenuVisible);
     };
+
+  // ML 모델 사용 코드
+  const [capturedImage, setCapturedImage] = useState(null);
+  const [videoStream, setVideoStream] = useState(null);
+  const [processedImage, setProccessedImage] = useState(null);
+  const [selectedModel, setSelectModel] = useState("Original");
   
   const socket = useSocket();
   const [remoteSocketId, setRemoteSocketId] = useState(null);
@@ -126,6 +133,77 @@ const VideoRoomPage = () => {
     handleNegoNeedFinal,
   ]);
 
+
+  useEffect(() => {
+    const startVideoStream = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        setVideoStream(stream);
+  
+        const videoElement = document.createElement('video');
+        videoElement.srcObject = stream;
+        videoElement.play();
+  
+        const captureInterval = setInterval(() => handleCaptureImage(videoElement), 100);
+  
+        return () => {
+          clearInterval(captureInterval);
+        };
+      } catch (error) {
+        console.error(error);
+      }
+    };
+  
+    if (socket) {
+      startVideoStream();
+    }
+  
+    return () => {
+      if (videoStream) {
+        videoStream.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, [socket]);
+  
+  const handleCaptureImage = (videoElement) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 720;
+    canvas.height = 480;
+  
+    // 이제 videoElement를 drawImage 함수에 전달
+    ctx.drawImage(videoElement, 0, 0, 720, 480);
+  
+    const rawData = canvas.toDataURL("image/jpeg", 0.5);
+  
+    // 서버로 이미지 전송
+    socket.emit('image', { rawData });
+  };
+
+  const handleModelChange = useCallback((model) => {
+    setSelectModel(model);
+    socket.emit('image-model', { model });
+  }, [socket])
+
+  useEffect(() => {
+    if (socket) {
+      socket.on("processed_image", (image) => {
+        console.log("Received processed image:", image);
+        setProccessedImage(image);
+      });
+
+      return () => {
+        socket.off("processed_image");
+      };
+    }
+  }, [socket]);
+
+
+  // socket.on("processed_image", function (image) {
+  //   photo.setAttribute("src", image);
+  // });
+  
+
   return (
     <div>
           {/* 헤더 바 */}
@@ -154,6 +232,16 @@ const VideoRoomPage = () => {
           />
         </>
       )}
+
+      {/* 캡쳐된 이미지를 화면에 표시 */}
+      {capturedImage && (
+        <img src={`data:image/jpeg;base64,${capturedImage}`} alt="Captured" />
+      )}
+      <div>
+        {/* 받아온 image 표시 */}
+        {processedImage && <img src={processedImage} alt="Processed Image" />}
+      </div>
+
       {remoteStream && (
         <>
           <ReactPlayer
@@ -184,11 +272,17 @@ const VideoRoomPage = () => {
                 <div className="model-selection-menu">
                 <h4>Choose your Avatar!</h4>
                 <ul>
-                    {models.map((model) => (
-                        <li key={model.id}>{model.name}</li>
-                    ))}
-                </ul>
-                </div>
+                {models.map((model) => (
+                  <li
+                    key={model.id}
+                    className={model.name === selectedModel ? 'selected' : ''}
+                    onClick={() => handleModelChange(model.name)}
+                  >
+                    {model.name}
+                  </li>
+                ))}
+              </ul>
+      </div>
             )}
             <img src="/images/end.png" alt="end" className="end" />
         </div>
