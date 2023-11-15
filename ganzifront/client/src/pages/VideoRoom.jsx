@@ -2,7 +2,10 @@ import React, { useEffect, useCallback, useState } from "react";
 import ReactPlayer from "react-player";
 import peer from "../providers/peer";
 import { useSocket } from "../context/Socket";
+import { useLocation, useParams } from "react-router-dom";
 import '../pages/VideoRoom.css';
+import Chat from "./Chat";
+
 
 const VideoRoomPage = () => {
 
@@ -26,12 +29,14 @@ const VideoRoomPage = () => {
   const [capturedImage, setCapturedImage] = useState(null);
   const [videoStream, setVideoStream] = useState(null);
   const [processedImage, setProccessedImage] = useState(null);
+  const [remoteProcessedImage, setRemoteProccessedImage] = useState(null);
   const [selectedModel, setSelectModel] = useState("Original");
   
   const socket = useSocket();
   const [remoteSocketId, setRemoteSocketId] = useState(null);
   const [myStream, setMyStream] = useState();
   const [remoteStream, setRemoteStream] = useState();
+  const { roomId } = useParams();
 
   const handleUserJoined = useCallback(({ email, id }) => {
     console.log(`Email ${email} joined room`);
@@ -177,7 +182,7 @@ const VideoRoomPage = () => {
     const rawData = canvas.toDataURL("image/jpeg", 0.5);
   
     // 서버로 이미지 전송
-    socket.emit('image', { rawData });
+    socket.emit('image', { rawData, 'room' : roomId });
   };
 
   const handleModelChange = useCallback((model) => {
@@ -188,12 +193,17 @@ const VideoRoomPage = () => {
   useEffect(() => {
     if (socket) {
       socket.on("processed_image", (image) => {
-        console.log("Received processed image:", image);
+        // console.log("Received processed image:", image);
         setProccessedImage(image);
       });
+      socket.on("remote-processed_image", (image) => {
+
+        setRemoteProccessedImage(image);
+      })
 
       return () => {
         socket.off("processed_image");
+        socket.off("remote-processed_image")
       };
     }
   }, [socket]);
@@ -234,15 +244,16 @@ const VideoRoomPage = () => {
       )}
 
       {/* 캡쳐된 이미지를 화면에 표시 */}
-      {capturedImage && (
+      {/* {capturedImage && (
         <img src={`data:image/jpeg;base64,${capturedImage}`} alt="Captured" />
-      )}
-      <div>
+      )} */}
         {/* 받아온 image 표시 */}
-        {processedImage && <img src={processedImage} alt="Processed Image" />}
+      <div>
+        {processedImage && <img src={processedImage} width={400} height={400} alt="Processed Image" />}
+        {remoteProcessedImage && <img src={remoteProcessedImage} width={400} height={400} alt="Processed Image" />}
       </div>
 
-      {remoteStream && (
+      {/* {remoteStream && (
         <>
           <ReactPlayer
             playing
@@ -252,7 +263,7 @@ const VideoRoomPage = () => {
             url={remoteStream}
           />
         </>
-      )}
+      )} */}
 
       {/* 하단 바 */}
       <div className="bottom-bar">
@@ -294,13 +305,14 @@ const VideoRoomPage = () => {
                         <li>{remoteEmailId}</li>
                     </ul> */}
                 </div>
-                <div className="chat-box">
+                {/* <div className="chat-box">
                     <h2>채팅</h2>
                     <div className="chat-messages">
                     </div>
                     <input type="text" placeholder="메시지를 입력하세요" />
                     <button>Send</button>
-                </div>
+                </div> */}
+                <Chat/>
             </div>
 
     </div>
